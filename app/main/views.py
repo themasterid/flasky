@@ -45,10 +45,7 @@ def index():
     show_followed = False
     if current_user.is_authenticated:
         show_followed = bool(request.cookies.get('show_followed', ''))
-    if show_followed:
-        query = current_user.followed_posts
-    else:
-        query = Post.query
+    query = current_user.followed_posts if show_followed else Post.query
     pagination = query.order_by(Post.timestamp.desc()).paginate(
         page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
@@ -170,7 +167,7 @@ def follow(username):
         return redirect(url_for('.user', username=username))
     current_user.follow(user)
     db.session.commit()
-    flash('You are now following %s.' % username)
+    flash(f'You are now following {username}.')
     return redirect(url_for('.user', username=username))
 
 
@@ -187,7 +184,7 @@ def unfollow(username):
         return redirect(url_for('.user', username=username))
     current_user.unfollow(user)
     db.session.commit()
-    flash('You are not following %s anymore.' % username)
+    flash(f'You are not following {username} anymore.')
     return redirect(url_for('.user', username=username))
 
 
