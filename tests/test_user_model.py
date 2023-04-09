@@ -74,7 +74,7 @@ class UserModelTestCase(unittest.TestCase):
         db.session.add(u)
         db.session.commit()
         token = u.generate_reset_token()
-        self.assertFalse(User.reset_password(token + 'a', 'horse'))
+        self.assertFalse(User.reset_password(f'{token}a', 'horse'))
         self.assertTrue(u.verify_password('cat'))
 
     def test_valid_email_change_token(self):
@@ -216,4 +216,4 @@ class UserModelTestCase(unittest.TestCase):
         expected_keys = ['url', 'username', 'member_since', 'last_seen',
                          'posts_url', 'followed_posts_url', 'post_count']
         self.assertEqual(sorted(json_user.keys()), sorted(expected_keys))
-        self.assertEqual('/api/v1/users/' + str(u.id), json_user['url'])
+        self.assertEqual(f'/api/v1/users/{str(u.id)}', json_user['url'])

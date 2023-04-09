@@ -13,12 +13,8 @@ def get_posts():
         page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
-    prev = None
-    if pagination.has_prev:
-        prev = url_for('api.get_posts', page=page-1)
-    next = None
-    if pagination.has_next:
-        next = url_for('api.get_posts', page=page+1)
+    prev = url_for('api.get_posts', page=page-1) if pagination.has_prev else None
+    next = url_for('api.get_posts', page=page+1) if pagination.has_next else None
     return jsonify({
         'posts': [post.to_json() for post in posts],
         'prev': prev,

@@ -117,11 +117,10 @@ class User(UserMixin, db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
+        if self.role is None and self.email == current_app.config['FLASKY_ADMIN']:
+            self.role = Role.query.filter_by(name='Administrator').first()
         if self.role is None:
-            if self.email == current_app.config['FLASKY_ADMIN']:
-                self.role = Role.query.filter_by(name='Administrator').first()
-            if self.role is None:
-                self.role = Role.query.filter_by(default=True).first()
+            self.role = Role.query.filter_by(default=True).first()
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = self.gravatar_hash()
         self.follow(self)
@@ -219,8 +218,7 @@ class User(UserMixin, db.Model):
             db.session.add(f)
 
     def unfollow(self, user):
-        f = self.followed.filter_by(followed_id=user.id).first()
-        if f:
+        if f := self.followed.filter_by(followed_id=user.id).first():
             db.session.delete(f)
 
     def is_following(self, user):
@@ -241,17 +239,17 @@ class User(UserMixin, db.Model):
             .filter(Follow.follower_id == self.id)
 
     def to_json(self):
-        json_user = {
+        return {
             'url': url_for('api.get_user', id=self.id),
             'username': self.username,
             'member_since': self.member_since,
             'last_seen': self.last_seen,
             'posts_url': url_for('api.get_user_posts', id=self.id),
-            'followed_posts_url': url_for('api.get_user_followed_posts',
-                                          id=self.id),
-            'post_count': self.posts.count()
+            'followed_posts_url': url_for(
+                'api.get_user_followed_posts', id=self.id
+            ),
+            'post_count': self.posts.count(),
         }
-        return json_user
 
     def generate_auth_token(self, expiration):
         s = Serializer(current_app.config['SECRET_KEY'],
@@ -305,16 +303,15 @@ class Post(db.Model):
             tags=allowed_tags, strip=True))
 
     def to_json(self):
-        json_post = {
+        return {
             'url': url_for('api.get_post', id=self.id),
             'body': self.body,
             'body_html': self.body_html,
             'timestamp': self.timestamp,
             'author_url': url_for('api.get_user', id=self.author_id),
             'comments_url': url_for('api.get_post_comments', id=self.id),
-            'comment_count': self.comments.count()
+            'comment_count': self.comments.count(),
         }
-        return json_post
 
     @staticmethod
     def from_json(json_post):
@@ -346,7 +343,7 @@ class Comment(db.Model):
             tags=allowed_tags, strip=True))
 
     def to_json(self):
-        json_comment = {
+        return {
             'url': url_for('api.get_comment', id=self.id),
             'post_url': url_for('api.get_post', id=self.post_id),
             'body': self.body,
@@ -354,7 +351,6 @@ class Comment(db.Model):
             'timestamp': self.timestamp,
             'author_url': url_for('api.get_user', id=self.author_id),
         }
-        return json_comment
 
     @staticmethod
     def from_json(json_comment):

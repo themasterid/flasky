@@ -112,8 +112,7 @@ def password_reset_request():
         return redirect(url_for('main.index'))
     form = PasswordResetRequestForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower()).first()
-        if user:
+        if user := User.query.filter_by(email=form.email.data.lower()).first():
             token = user.generate_reset_token()
             send_email(user.email, 'Reset Your Password',
                        'auth/email/reset_password',
@@ -130,12 +129,11 @@ def password_reset(token):
         return redirect(url_for('main.index'))
     form = PasswordResetForm()
     if form.validate_on_submit():
-        if User.reset_password(token, form.password.data):
-            db.session.commit()
-            flash('Your password has been updated.')
-            return redirect(url_for('auth.login'))
-        else:
+        if not User.reset_password(token, form.password.data):
             return redirect(url_for('main.index'))
+        db.session.commit()
+        flash('Your password has been updated.')
+        return redirect(url_for('auth.login'))
     return render_template('auth/reset_password.html', form=form)
 
 
